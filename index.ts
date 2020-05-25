@@ -7,9 +7,16 @@ const server = http.createServer();
 const publicDir = p.resolve(__dirname, "public");
 server.on("request", (request: IncomingMessage, response: ServerResponse) => {
   const { method, url: path, headers } = request;
-
   const { pathname } = url.parse(path);
-  const filename = pathname.substr(1);
+
+  if (method !== "GET") {
+    response.statusCode = 405;
+    response.end("这是非 GET 的返回值");
+    return;
+  }
+
+  const filename = pathname.substr(1) || "index.html";
+
   fs.readFile(p.resolve(publicDir, filename), (error, data) => {
     if (error) {
       if (error.errno === -4058) {
