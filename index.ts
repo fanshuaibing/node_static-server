@@ -3,8 +3,11 @@ import { IncomingMessage, ServerResponse } from "http";
 import * as fs from "fs";
 import * as p from "path";
 import * as url from "url";
+
 const server = http.createServer();
 const publicDir = p.resolve(__dirname, "public");
+let cacheAge = 3600 * 24 * 365;
+
 server.on("request", (request: IncomingMessage, response: ServerResponse) => {
   const { method, url: path, headers } = request;
   const { pathname } = url.parse(path);
@@ -14,9 +17,7 @@ server.on("request", (request: IncomingMessage, response: ServerResponse) => {
     response.end("这是非 GET 的返回值");
     return;
   }
-
   const filename = pathname.substr(1) || "index.html";
-
   fs.readFile(p.resolve(publicDir, filename), (error, data) => {
     if (error) {
       if (error.errno === -4058) {
@@ -32,6 +33,7 @@ server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         response.end("服务器繁忙，请稍后重试");
       }
     } else {
+      response.setHeader("Cache-Control", `public, max-age=${cacheAge}`);
       response.end(data);
     }
   });
